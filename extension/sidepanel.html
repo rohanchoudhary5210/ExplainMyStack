@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ExplainMyStack</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <header>
+    <h1>ExplainMyStack</h1>
+    <p class="hint">Open a file on GitHub, then click the button.</p>
+  </header>
+  <button id="explain">Explain This File</button>
+  <p id="file" class="hint"></p>
+  <div id="status" role="status" aria-live="polite"></div>
+  <main id="result"></main>
+  <script src="markdown.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

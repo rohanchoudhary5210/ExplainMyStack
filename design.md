@@ -28,7 +28,7 @@ sequenceDiagram
     -   Serves as the main UI.
     -   communicate with the Content Script to get data.
     -   Communicates with the Backend to get explanations.
-    -   Uses `marked.js` to render Markdown.
+    -   Renders Markdown with a small built-in renderer (`markdown.js`) that escapes HTML first, so model output cannot inject scripts.
 -   **Content Script (`content.js`)**:
     -    injected into GitHub pages.
     -   Listens for messages from the Side Panel.
@@ -56,5 +56,5 @@ The LLM is prompted to act as a senior engineer onboarding a new developer.
 4.  **Potential Risks**: What could break.
 
 ## Security & Scalability
--   **CORS**: Currently allows `*` for local development. In production, restrict to the Extension ID.
+-   **CORS**: Only `chrome-extension://` and localhost origins are allowed. In production, restrict to the published Extension ID.
 -   **API Key**: Backend currently reads `OPENAI_API_KEY` from environment.

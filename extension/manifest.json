@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "ExplainMyStack",
+  "version": "1.0.0",
+  "description": "Explains the GitHub file you're viewing, in the context of its repository.",
+  "permissions": ["sidePanel", "activeTab", "scripting"],
+  "host_permissions": ["https://github.com/*", "http://127.0.0.1:8000/*"],
+  "background": { "service_worker": "background.js" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "action": { "default_title": "ExplainMyStack" },
+  "content_scripts": [
+    { "matches": ["https://github.com/*"], "js": ["content.js"] }
+  ]
+}

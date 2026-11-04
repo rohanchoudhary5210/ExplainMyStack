@@ -13,7 +13,7 @@
     ```
 
 3.  (Optional) Set your OpenAI API Key:
-    - Create a `.env` file in `backend/`
+    - Copy `backend/.env.example` to `backend/.env`
     - Add: `OPENAI_API_KEY=sk-...`
     - *Note: If you skip this, the backend will run in "Mock Mode" and provide static responses.*
 
@@ -28,7 +28,7 @@
 1.  Open Google Chrome and navigate to `chrome://extensions`.
 2.  Enable **Developer mode** (toggle in the top right).
 3.  Click **Load unpacked**.
-4.  Select the `extension` folder inside `c:\Users\Asus\Downloads\Hackathon`.
+4.  Select the `extension` folder of this repository.
 
 ## 3. Usage
 
@@ -40,7 +40,15 @@
 5.  Click **"Explain This File"**.
 6.  The AI explanation will appear in the panel!
 
+## 4. Run the tests
+
+From `backend/`:
+```bash
+pytest
+```
+The tests run in Mock Mode, so no API key or network is needed. They cover the health check, the response sections, input validation (bad repo names, empty or oversized files) and the 502 returned when the LLM provider fails.
+
 ## Troubleshooting
 
--   **"Failed to read file content"**: Refresh the GitHub page. The extension needs to inject its script after the page load.
+-   **"Could not read this file's content"**: Refresh the GitHub page. (If the page was open before the extension loaded, the side panel injects the content script automatically.)
 -   **Backend Error**: Ensure the terminal running `uvicorn` is still active.
