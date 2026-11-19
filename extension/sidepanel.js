@@ -1,4 +1,5 @@
 const API_URL = "http://127.0.0.1:8000/explain-file";
+const REQUEST_TIMEOUT_MS = 30000;
 
 const button = document.getElementById("explain");
 const statusEl = document.getElementById("status");
@@ -36,11 +37,15 @@ button.addEventListener("click", async () => {
     let res;
     try {
       res = await fetch(API_URL, {
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(file),
       });
-    } catch {
+    } catch (err) {
+      if (err?.name === "TimeoutError" || err?.name === "AbortError") {
+        throw new Error("The AI request timed out after 30 seconds. Please try again.");
+      }
       throw new Error("Backend not reachable. Is uvicorn running on 127.0.0.1:8000?");
     }
     const data = await res.json().catch(() => ({}));
