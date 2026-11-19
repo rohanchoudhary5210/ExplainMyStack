@@ -74,3 +74,50 @@ def test_llm_rejects_empty_provider_response(monkeypatch):
     res = client.post("/explain-file", json=VALID)
     assert res.status_code == 502
     assert "unexpected response" in res.json()["detail"]
+
+def test_repository_question_uses_selected_files(monkeypatch):
+    from app import main
+    monkeypatch.setattr(main, "collect_context", lambda *_: ("FILE: src/main.py\nprint(1)", ["src/main.py"]))
+    monkeypatch.setattr(main, "answer_repository", lambda *_: "## Answer\nFound in src/main.py")
+    res = client.post("/ask-repository", json={"repo_name": "owner/project", "question": "What runs the application?"})
+    assert res.status_code == 200
+    assert res.json()["analyzed_files"] == ["src/main.py"]
+
+
+def test_repository_question_validates_input():
+    assert client.post("/ask-repository", json={"repo_name": "invalid", "question": "?"}).status_code == 422
+
+
+def test_api_token_required_when_configured(monkeypatch):
+    monkeypatch.setenv("EXPLAINMYSTACK_API_TOKEN", "secret-test-token")
+    assert client.post("/explain-file", json=VALID).status_code == 401
+    assert client.post("/explain-file", json=VALID, headers={"X-API-Token": "wrong"}).status_code == 401
+    assert client.post("/explain-file", json=VALID, headers={"X-API-Token": "secret-test-token"}).status_code == 200
+
+
+def test_repository_failure_is_clean_502(monkeypatch):
+    from app import main
+    monkeypatch.setattr(main, "collect_context", lambda *_: (_ for _ in ()).throw(llm_service.LLMError("GitHub unavailable")))
+    response = client.post("/ask-repository", json={"repo_name": "owner/project", "question": "Where is entry point?"})
+    assert response.status_code == 502
+
+
+def test_repository_context_filters_and_bounds(monkeypatch):
+    from app import repository_service as service
+
+    def fake_json(url):
+        if url.endswith("test-project"):
+            return {"private": False, "default_branch": "main"}
+        return {"tree": [
+            {"type": "blob", "path": "README.md", "size": 50},
+            {"type": "blob", "path": "src/auth.py", "size": 50},
+            {"type": "blob", "path": "node_modules/bad.js", "size": 50},
+        ]}
+
+    monkeypatch.setattr(service, "fetch_json", fake_json)
+    monkeypatch.setattr(service, "fetch_source", lambda url: "safe code")
+    context, paths = service.collect_context("owner/test-project", "How does auth work?")
+    assert "src/auth.py" in paths
+    assert "node_modules/bad.js" not in paths
+    assert len(paths) <= service.MAX_FILES
+    assert "safe code" in context
