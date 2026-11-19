@@ -1,54 +1,72 @@
-# ExplainMyStack - Setup Instructions
+# ExplainMyStack
 
-## 1. Backend Setup
+A Chrome Manifest V3 side-panel extension and Python FastAPI backend for understanding **public GitHub source code**.
 
-1.  Navigate to the `backend` directory:
-    ```bash
-    cd backend
-    ```
+## Features
 
-2.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
+- **Explain This File:** structured AI explanation of the currently open GitHub file
+- **Ask About Repository:** answer a natural-language question from a bounded selection of up to eight likely relevant source files, with the file paths returned for inspection
+- Mock mode for development without an OpenAI API key
+- Request timeouts, Markdown escaping, API error reporting and automated tests
+- Optional API-token protection for local experimentation
 
-3.  (Optional) Set your OpenAI API Key:
-    - Copy `backend/.env.example` to `backend/.env`
-    - Add: `OPENAI_API_KEY=sk-...`
-    - *Note: If you skip this, the backend will run in "Mock Mode" and provide static responses.*
+> Repository Q&A is a **limited-context preview**, not a full-codebase semantic index, autonomous agent, or guaranteed exhaustive security audit. File selection is heuristic.
 
-4.  Start the server:
-    ```bash
-    uvicorn app.main:app --reload
-    ```
-    You should see: `Uvicorn running on http://127.0.0.1:8000`
+## Quick start
 
-## 2. Extension Setup
+1. Install Python 3.12+ and Google Chrome.
+2. Open a terminal in `backend`, then run:
+   ```sh
+   python -m venv .venv
+   # Windows: .venv\Scripts\activate
+   # macOS/Linux: source .venv/bin/activate
+   pip install -r requirements.txt
+   uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+   ```
+3. For real AI responses, create `backend/.env` with `OPENAI_API_KEY=your_key`. Without one, the app returns explicit mock responses.
+4. In Chrome open `chrome://extensions`, enable Developer mode, select **Load unpacked**, and choose the `extension` directory.
+5. Open a public GitHub repository or file. Click the extension icon to open its side panel.
+6. Use **Explain This File** on a file page, or enter a question and use **Ask About Repository** from anywhere inside that repository.
 
-1.  Open Google Chrome and navigate to `chrome://extensions`.
-2.  Enable **Developer mode** (toggle in the top right).
-3.  Click **Load unpacked**.
-4.  Select the `extension` folder of this repository.
+## Backend endpoints
 
-## 3. Usage
+- `GET /health` — health check
+- `POST /explain-file` — `{"repo_name":"owner/repo","file_path":"src/a.py","code_content":"print(1)"}`
+- `POST /ask-repository` — `{"repo_name":"owner/repo","question":"Where is the entry point?"}`
 
-1.  Go to any public GitHub repository (e.g., [this repo](https://github.com/fastapi/fastapi)).
-2.  Open a file (e.g., `README.md` or a `.py` file).
-3.  Click the **ExplainMyStack** icon in the Chrome toolbar.
-    - *Tip: Pin it for easy access.*
-4.  The side panel will open.
-5.  Click **"Explain This File"**.
-6.  The AI explanation will appear in the panel!
+Repository questions use GitHub's **public REST and raw-content endpoints** and don't access private repositories. A small number of source files are selected using file-path keywords, size limits and configuration-file priorities.
 
-## 4. Run the tests
+## Security and deployment
 
-From `backend/`:
-```bash
-pytest
-```
-The tests run in Mock Mode, so no API key or network is needed. They cover the health check, the response sections, input validation (bad repo names, empty or oversized files) and the 502 returned when the LLM provider fails.
+**By default the backend is for localhost development only.** Keep uvicorn bound to `127.0.0.1`, never to an internet-facing address without configuring proper authentication, TLS, a trusted extension ID, rate limits, and usage quotas.
 
-## Troubleshooting
+- Optional `EXPLAINMYSTACK_API_TOKEN` activates `X-API-Token` validation on AI endpoints. Enter the same token in the extension's **Local backend settings**. The token is not persisted.
+- This static shared token is suitable for local development and trusted environments **only**. It is not a production multi-user authentication system.
+- CORS is restricted to Chrome extension origin format and localhost; **CORS does not replace authentication**.
+- Do not paste confidential source code into the extension: explanations send source content to the configured AI provider.
+- Never check `.env` or API keys into version control.
+- Prompt injections embedded in repositories are treated as untrusted text, but prompt guidance alone cannot guarantee protection.
+- Repository retrieval limits file sizes and source extensions. It doesn't execute repository code.
 
--   **"Could not read this file's content"**: Refresh the GitHub page. (If the page was open before the extension loaded, the side panel injects the content script automatically.)
--   **Backend Error**: Ensure the terminal running `uvicorn` is still active.
+## Tests
+
+From `backend`: `python -m pytest -q`
+
+From repository root with Node.js 22+: `node --test extension/tests/*.test.cjs`.
+
+GitHub Actions runs both suites for pushed changes and pull requests.
+
+## Known limitations
+
+- GitHub changes its DOM and embedded metadata formats; manually test file extraction periodically.
+- GitHub URL parsing without embedded ref metadata is ambiguous for branch names containing slashes.
+- GitHub public API rate limits and timeouts may affect repository analysis.
+- Selected files may omit a relevant implementation; responses must acknowledge missing context.
+- Only public repositories are supported, and no persistent memory, RAG embedding index, or autonomous code-changing features are implemented yet.
+
+## Roadmap
+
+1. Improve extension UI testing and GitHub file extraction across layouts.
+2. Add authenticated user sessions, server-side quotas, logging without code leakage, and cloud deployment hardening.
+3. Add repository indexes, citations to code lines, graph navigation and incremental retrieval.
+4. Add agentic code review and proposed patches behind explicit user approval.
