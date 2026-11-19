@@ -1,0 +1,39 @@
+name: Verify ExplainMyStack
+
+on:
+  push:
+    branches: [main, "improve/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+        env:
+          OPENAI_API_KEY: ""
+
+  extension-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --check extension/content.js
+      - run: node --check extension/sidepanel.js
+      - run: node --check extension/markdown.js
+      - run: node --test extension/tests/*.test.cjs
