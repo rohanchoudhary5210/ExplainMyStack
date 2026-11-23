@@ -2,6 +2,12 @@
 
 A Chrome Manifest V3 side-panel extension and Python FastAPI backend for understanding **public GitHub source code**.
 
+## How I built this
+
+- **Idea and design:** ExplainMyStack started as a hackathon idea (January 2026). The requirements, design and architecture docs in this repo (`requirements.md`, `design.md`, `architecture.md`) came from that stage.
+- **Code:** the current backend and extension were written in November 2026 with heavy help from AI coding assistants. I drove the scope, reviewed the code, and ran and extended the tests.
+- **What I focused on:** request validation, clear error codes when the LLM provider fails, and tests that run without network access.
+
 ## Features
 
 - **Explain This File:** structured AI explanation of the currently open GitHub file
@@ -70,3 +76,7 @@ GitHub Actions runs both suites for pushed changes and pull requests.
 2. Add authenticated user sessions, server-side quotas, logging without code leakage, and cloud deployment hardening.
 3. Add repository indexes, citations to code lines, graph navigation and incremental retrieval.
 4. Add agentic code review and proposed patches behind explicit user approval.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
